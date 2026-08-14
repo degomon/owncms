@@ -134,6 +134,9 @@
           <label>Contact Email (Destination alert)</label>
           <input type="email" id="setting-email" class="input">
 
+          <label>Analytics & Tracking Code (Matomo, StatCounter, Google Analytics, Plausible, etc.)</label>
+          <textarea id="setting-analytics" class="textarea" rows="4" style="font-family: monospace; font-size: 0.85rem;" placeholder="<!-- Paste your tracking script / HTML here -->"></textarea>
+
           <button type="submit" class="btn">Save Settings</button>
         </form>
       </div>
@@ -437,6 +440,7 @@
         document.getElementById('setting-favicon').value = data.settings.favicon_url || '';
         document.getElementById('setting-description').value = data.settings.site_description || '';
         document.getElementById('setting-email').value = data.settings.contact_email || '';
+        document.getElementById('setting-analytics').value = data.settings.analytics_code || '';
 
         if (data.settings.logo_url) {
           document.getElementById('logo-preview-img').src = data.settings.logo_url;
@@ -552,6 +556,7 @@
           favicon_url: document.getElementById('setting-favicon').value,
           site_description: document.getElementById('setting-description').value,
           contact_email: document.getElementById('setting-email').value,
+          analytics_code: document.getElementById('setting-analytics').value,
         })
       });
       alert('Settings updated successfully');

@@ -1,4 +1,4 @@
-// Motor de renderizado dinámico de temas, SEO, enrutamiento SPA y Slider Puzzle Captcha
+// Motor de renderizado dinámico de temas, SEO, Analytics y enrutamiento SPA
 
 class CMSApp {
   constructor() {
@@ -28,10 +28,37 @@ class CMSApp {
           this.settings.site_title || 'Devomatik',
           this.settings.site_description || 'Software Consulting, App Development & Cloud Architecture'
         );
+        this.injectAnalytics(this.settings.analytics_code);
       }
     } catch (e) {
       console.error('Error loading settings', e);
     }
+  }
+
+  injectAnalytics(code) {
+    if (!code || !code.trim()) return;
+
+    // Evitar duplicación
+    const existing = document.getElementById('custom-analytics-script');
+    if (existing) existing.remove();
+
+    const container = document.createElement('div');
+    container.id = 'custom-analytics-script';
+    container.innerHTML = code;
+
+    // Ejecutar scripts incrustados
+    const scripts = container.querySelectorAll('script');
+    scripts.forEach((oldScript) => {
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach((attr) => {
+        newScript.setAttribute(attr.name, attr.value);
+      });
+      newScript.textContent = oldScript.textContent;
+      document.head.appendChild(newScript);
+      oldScript.remove();
+    });
+
+    document.body.appendChild(container);
   }
 
   updateFavicon(url) {
@@ -545,11 +572,9 @@ class CMSApp {
     const height = 140;
     const pieceSize = 44;
 
-    // Posición aleatoria del objetivo
     const targetX = Math.floor(Math.random() * (width - pieceSize - 80)) + 60;
     const targetY = Math.floor(Math.random() * (height - pieceSize - 30)) + 15;
 
-    // Dibujar fondo estético procedural (sin llamadas externas a APIs pesadas)
     const hue1 = Math.floor(Math.random() * 360);
     const hue2 = (hue1 + 60) % 360;
     const grad = bgCtx.createLinearGradient(0, 0, width, height);
@@ -558,7 +583,6 @@ class CMSApp {
     bgCtx.fillStyle = grad;
     bgCtx.fillRect(0, 0, width, height);
 
-    // Formas de textura
     bgCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
     for (let i = 0; i < 6; i++) {
       bgCtx.beginPath();
@@ -566,14 +590,12 @@ class CMSApp {
       bgCtx.fill();
     }
 
-    // Dibujar hueco sombra en el fondo
     bgCtx.fillStyle = 'rgba(0, 0, 0, 0.55)';
     bgCtx.fillRect(targetX, targetY, pieceSize, pieceSize);
     bgCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
     bgCtx.lineWidth = 2;
     bgCtx.strokeRect(targetX, targetY, pieceSize, pieceSize);
 
-    // Extraer la pieza recortada
     const pieceImgData = bgCtx.getImageData(targetX, targetY, pieceSize, pieceSize);
 
     const drawPiece = (xPos) => {
@@ -594,17 +616,15 @@ class CMSApp {
     slider.onchange = (e) => {
       const currentX = parseInt(e.target.value, 10);
       if (Math.abs(currentX - targetX) <= 6) {
-        // Resuelto con éxito
         this.captchaSolved = true;
         this.captchaToken = `${targetX}:${currentX}:${Date.now()}`;
         slider.disabled = true;
-        drawPiece(targetX); // Snapping exacto
+        drawPiece(targetX);
         if (statusText) {
           statusText.style.color = '#10b981';
           statusText.textContent = '✓ Verification successful!';
         }
       } else {
-        // Fallido, reintentar
         slider.value = 0;
         drawPiece(0);
         if (statusText) {
