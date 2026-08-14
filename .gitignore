@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.local
+local.db
+local.db-journal
+.wrangler/
+dist/
+temp/
+non-src/

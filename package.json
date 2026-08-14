@@ -1,0 +1,21 @@
+{
+  "name": "devomatik-cms",
+  "version": "1.0.0",
+  "description": "CMS ultraligero y desacoplado para Devomatik sobre Cloudflare Pages y Turso",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --live-reload",
+    "build": "echo 'No build step required for static assets'",
+    "db:init": "node tools/db-init.js",
+    "import:blogger": "node tools/blogger-import.js"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.6.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240512.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^3.57.1"
+  }
+}

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Devomatik CMS</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --border: #e2e8f0;
+      --font: system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); }
+    body { background: var(--bg); color: var(--text); padding: 2rem; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .btn { background: var(--primary); color: #fff; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .btn-secondary { background: #64748b; }
+    .input, .textarea, .select { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .status-badge { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .status-published { background: #dcfce7; color: #15803d; }
+    .status-draft { background: #fef9c3; color: #a16207; }
+    .hidden { display: none; }
+    .nav-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .upload-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+    .preview-box { display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem; margin-bottom: 1rem; }
+    .preview-box img { max-height: 48px; max-width: 120px; object-fit: contain; border: 1px solid var(--border); padding: 2px; border-radius: 4px; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login View -->
+    <div id="login-view" class="card" style="max-width: 400px; margin: 5rem auto;">
+      <h2 style="margin-bottom: 1rem;">CMS Access</h2>
+      <form id="login-form">
+        <label>Username / Email</label>
+        <input type="text" id="username" class="input" required>
+        <label>Password</label>
+        <input type="password" id="password" class="input" required>
+        <button type="submit" class="btn" style="width: 100%;">Sign In</button>
+        <div id="login-error" style="color: red; margin-top: 0.5rem; font-size: 0.85rem;"></div>
+      </form>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="hidden">
+      <div class="header">
+        <div>
+          <h1>Devomatik CMS</h1>
+          <span id="current-user-badge" style="color: var(--muted); font-size: 0.9rem;"></span>
+        </div>
+        <div>
+          <button id="btn-new-post" class="btn">+ New Post / Page</button>
+          <button id="btn-logout" class="btn btn-secondary">Sign Out</button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="nav-bar">
+        <button class="btn" id="tab-posts" onclick="switchTab('posts')">Content</button>
+        <button class="btn btn-secondary" id="tab-settings" onclick="switchTab('settings')">Settings & Branding</button>
+        <button class="btn btn-secondary" id="tab-users" onclick="switchTab('users')">Users & Security</button>
+      </div>
+
+      <!-- Settings Panel -->
+      <div id="settings-panel" class="card hidden">
+        <h3>Site Settings & Branding Configuration</h3>
+        <form id="settings-form" style="margin-top: 1rem;">
+          <label>Active Theme</label>
+          <select id="setting-theme" class="select">
+            <option value="corporate">Corporate (Devomatik Default)</option>
+            <option value="magazine">Magazine</option>
+            <option value="personal">Personal Blog</option>
+          </select>
+
+          <label>Site Title</label>
+          <input type="text" id="setting-title" class="input">
+
+          <label>Site Tagline / Subtitle (Hero headline)</label>
+          <input type="text" id="setting-tagline" class="input">
+
+          <label>Site Logo (Image / SVG URL)</label>
+          <div class="upload-row">
+            <input type="text" id="setting-logo" class="input" style="margin-bottom: 0;" placeholder="https://... or upload">
+            <input type="file" id="logo-file-input" style="display: none;" accept="image/*">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('logo-file-input').click()">Upload Logo</button>
+          </div>
+          <div id="logo-preview-box" class="preview-box hidden">
+            <img id="logo-preview-img" src="" alt="Logo preview">
+            <span style="font-size: 0.85rem; color: var(--muted);">Current Logo</span>
+          </div>
+
+          <label>Favicon (ICO / PNG / SVG URL)</label>
+          <div class="upload-row">
+            <input type="text" id="setting-favicon" class="input" style="margin-bottom: 0;" placeholder="https://... or upload">
+            <input type="file" id="favicon-file-input" style="display: none;" accept="image/*,.ico">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('favicon-file-input').click()">Upload Favicon</button>
+          </div>
+          <div id="favicon-preview-box" class="preview-box hidden">
+            <img id="favicon-preview-img" src="" alt="Favicon preview" style="max-height: 32px; max-width: 32px;">
+            <span style="font-size: 0.85rem; color: var(--muted);">Current Favicon</span>
+          </div>
+
+          <label>Site Description (SEO & Meta)</label>
+          <textarea id="setting-description" class="textarea" rows="2"></textarea>
+
+          <label>Contact Email</label>
+          <input type="email" id="setting-email" class="input">
+
+          <button type="submit" class="btn">Save Settings</button>
+        </form>
+      </div>
+
+      <!-- Users & Security Panel -->
+      <div id="users-panel" class="card hidden">
+        <h3>User Management & Security Settings</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+          <div>
+            <h4>Update My Account Credentials</h4>
+            <form id="profile-form" style="margin-top: 1rem;">
+              <label>Username</label>
+              <input type="text" id="profile-username" class="input" required>
+              <label>Email Address</label>
+              <input type="email" id="profile-email" class="input" required>
+              <label>Display Name</label>
+              <input type="text" id="profile-display-name" class="input">
+              <label>New Password (leave empty to keep current)</label>
+              <input type="password" id="profile-password" class="input" minlength="6">
+              <button type="submit" class="btn">Save Account Changes</button>
+            </form>
+          </div>
+          <div>
+            <h4>Create New Administrator</h4>
+            <form id="new-user-form" style="margin-top: 1rem;">
+              <label>Username</label>
+              <input type="text" id="new-username" class="input" required>
+              <label>Email Address</label>
+              <input type="email" id="new-user-email" class="input" required>
+              <label>Display Name</label>
+              <input type="text" id="new-user-display" class="input">
+              <label>Password</label>
+              <input type="password" id="new-user-password" class="input" minlength="6" required>
+              <button type="submit" class="btn">Create Administrator</button>
+            </form>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <h4>Registered Administrators</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Display Name</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Post Form Modal/Card -->
+      <div id="post-editor" class="card hidden">
+        <h3 id="editor-title">New Entry</h3>
+        <form id="post-form" style="margin-top: 1rem;">
+          <input type="hidden" id="post-id">
+          <label>Type</label>
+          <select id="post-type" class="select">
+            <option value="post">Blog Post</option>
+            <option value="page">Static Page</option>
+          </select>
+          <label>Title</label>
+          <input type="text" id="post-title" class="input" required>
+          <label>Slug (URL key)</label>
+          <input type="text" id="post-slug" class="input" required>
+          <label>Excerpt</label>
+          <input type="text" id="post-excerpt" class="input">
+          <label>Featured Image (URL)</label>
+          <div class="upload-row">
+            <input type="text" id="post-image" class="input" style="margin-bottom: 0;" placeholder="https://... or upload">
+            <input type="file" id="post-image-file" style="display: none;" accept="image/*">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('post-image-file').click()">Upload</button>
+          </div>
+          <label>Content (Markdown / HTML)</label>
+          <textarea id="post-content" class="textarea" rows="10" required></textarea>
+          <label>Status</label>
+          <select id="post-status" class="select">
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+          </select>
+          <button type="submit" class="btn">Save Entry</button>
+          <button type="button" id="btn-cancel-post" class="btn btn-secondary">Cancel</button>
+        </form>
+      </div>
+
+      <!-- Posts List Panel -->
+      <div id="posts-panel" class="card">
+        <h3>Content Management</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Slug</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="posts-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let token = localStorage.getItem('token');
+    let currentUser = null;
+
+    function switchTab(tab) {
+      document.getElementById('posts-panel').classList.toggle('hidden', tab !== 'posts');
+      document.getElementById('settings-panel').classList.toggle('hidden', tab !== 'settings');
+      document.getElementById('users-panel').classList.toggle('hidden', tab !== 'users');
+      document.getElementById('post-editor').classList.add('hidden');
+
+      document.getElementById('tab-posts').className = tab === 'posts' ? 'btn' : 'btn btn-secondary';
+      document.getElementById('tab-settings').className = tab === 'settings' ? 'btn' : 'btn btn-secondary';
+      document.getElementById('tab-users').className = tab === 'users' ? 'btn' : 'btn btn-secondary';
+
+      if (tab === 'users') loadUsers();
+      if (tab === 'settings') loadSettings();
+      if (tab === 'posts') loadPosts();
+    }
+
+    function checkAuth() {
+      if (token) {
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('dashboard-view').classList.remove('hidden');
+        loadPosts();
+        loadSettings();
+      } else {
+        document.getElementById('login-view').classList.remove('hidden');
+        document.getElementById('dashboard-view').classList.add('hidden');
+      }
+    }
+
+    async function handleFileUpload(fileInput, targetInputId, previewImgId, previewBoxId) {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          document.getElementById(targetInputId).value = data.url;
+          if (previewImgId && previewBoxId) {
+            document.getElementById(previewImgId).src = data.url;
+            document.getElementById(previewBoxId).classList.remove('hidden');
+          }
+        } else {
+          alert('Error uploading file: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Network error uploading file');
+      }
+    }
+
+    document.getElementById('logo-file-input').addEventListener('change', (e) => {
+      handleFileUpload(e.target, 'setting-logo', 'logo-preview-img', 'logo-preview-box');
+    });
+
+    document.getElementById('favicon-file-input').addEventListener('change', (e) => {
+      handleFileUpload(e.target, 'setting-favicon', 'favicon-preview-img', 'favicon-preview-box');
+    });
+
+    document.getElementById('post-image-file').addEventListener('change', (e) => {
+      handleFileUpload(e.target, 'post-image');
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value,
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        token = data.token;
+        currentUser = data.user;
+        localStorage.setItem('token', token);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        if (currentUser) {
+          document.getElementById('current-user-badge').textContent = `Logged in as: ${currentUser.username}`;
+        }
+        checkAuth();
+      } else {
+        document.getElementById('login-error').textContent = data.error || 'Invalid credentials';
+      }
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+      token = null;
+      currentUser = null;
+      checkAuth();
+    });
+
+    async function loadPosts() {
+      const res = await fetch('/api/admin/posts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const tbody = document.getElementById('posts-table-body');
+      tbody.innerHTML = (data.posts || []).map(p => `
+        <tr>
+          <td><strong>${p.title}</strong></td>
+          <td><code>${p.type || 'post'}</code></td>
+          <td><code>/${p.slug}</code></td>
+          <td><span class="status-badge status-${p.status}">${p.status}</span></td>
+          <td>${new Date(p.created_at).toLocaleDateString('en-US')}</td>
+          <td>
+            <button onclick="editPost(${p.id})" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</button>
+            <button onclick="deletePost(${p.id})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #ef4444;">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadSettings() {
+      const res = await fetch('/api/admin/settings', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.settings) {
+        document.getElementById('setting-theme').value = data.settings.theme || 'corporate';
+        document.getElementById('setting-title').value = data.settings.site_title || '';
+        document.getElementById('setting-tagline').value = data.settings.site_tagline || '';
+        document.getElementById('setting-logo').value = data.settings.logo_url || '';
+        document.getElementById('setting-favicon').value = data.settings.favicon_url || '';
+        document.getElementById('setting-description').value = data.settings.site_description || '';
+        document.getElementById('setting-email').value = data.settings.contact_email || '';
+
+        if (data.settings.logo_url) {
+          document.getElementById('logo-preview-img').src = data.settings.logo_url;
+          document.getElementById('logo-preview-box').classList.remove('hidden');
+        }
+        if (data.settings.favicon_url) {
+          document.getElementById('favicon-preview-img').src = data.settings.favicon_url;
+          document.getElementById('favicon-preview-box').classList.remove('hidden');
+        }
+      }
+    }
+
+    async function loadUsers() {
+      const res = await fetch('/api/admin/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.users) {
+        const tbody = document.getElementById('users-table-body');
+        tbody.innerHTML = data.users.map(u => `
+          <tr>
+            <td>${u.id}</td>
+            <td><strong>${u.username}</strong></td>
+            <td>${u.email}</td>
+            <td>${u.display_name || '-'}</td>
+            <td>${new Date(u.created_at).toLocaleDateString('en-US')}</td>
+          </tr>
+        `).join('');
+
+        const savedUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        const myData = data.users.find(u => u.id === savedUser.id) || data.users[0];
+        if (myData) {
+          document.getElementById('profile-username').value = myData.username;
+          document.getElementById('profile-email').value = myData.email;
+          document.getElementById('profile-display-name').value = myData.display_name || '';
+        }
+      }
+    }
+
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('profile-username').value;
+      const email = document.getElementById('profile-email').value;
+      const displayName = document.getElementById('profile-display-name').value;
+      const password = document.getElementById('profile-password').value;
+
+      const payload = {
+        username,
+        email,
+        display_name: displayName,
+      };
+      if (password && password.trim() !== '') {
+        payload.password = password;
+      }
+
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Account credentials updated successfully!');
+        document.getElementById('profile-password').value = '';
+        document.getElementById('current-user-badge').textContent = `Logged in as: ${username}`;
+        loadUsers();
+      } else {
+        alert('Error: ' + (data.error || 'Failed to update credentials'));
+      }
+    });
+
+    document.getElementById('new-user-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          username: document.getElementById('new-username').value,
+          email: document.getElementById('new-user-email').value,
+          display_name: document.getElementById('new-user-display').value,
+          password: document.getElementById('new-user-password').value,
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('New administrator created successfully!');
+        document.getElementById('new-user-form').reset();
+        loadUsers();
+      } else {
+        alert('Error: ' + (data.error || 'Failed to create user'));
+      }
+    });
+
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          theme: document.getElementById('setting-theme').value,
+          site_title: document.getElementById('setting-title').value,
+          site_tagline: document.getElementById('setting-tagline').value,
+          logo_url: document.getElementById('setting-logo').value,
+          favicon_url: document.getElementById('setting-favicon').value,
+          site_description: document.getElementById('setting-description').value,
+          contact_email: document.getElementById('setting-email').value,
+        })
+      });
+      alert('Settings updated successfully');
+    });
+
+    document.getElementById('btn-new-post').addEventListener('click', () => {
+      document.getElementById('post-form').reset();
+      document.getElementById('post-id').value = '';
+      document.getElementById('editor-title').textContent = 'New Entry';
+      document.getElementById('post-editor').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-cancel-post').addEventListener('click', () => {
+      document.getElementById('post-editor').classList.add('hidden');
+    });
+
+    document.getElementById('post-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('post-id').value;
+      const payload = {
+        type: document.getElementById('post-type').value,
+        title: document.getElementById('post-title').value,
+        slug: document.getElementById('post-slug').value,
+        excerpt: document.getElementById('post-excerpt').value,
+        featured_image: document.getElementById('post-image').value,
+        content_markdown: document.getElementById('post-content').value,
+        content_html: document.getElementById('post-content').value,
+        status: document.getElementById('post-status').value,
+      };
+
+      const url = id ? `/api/admin/posts/${id}` : '/api/admin/posts';
+      const method = id ? 'PUT' : 'POST';
+
+      await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      document.getElementById('post-editor').classList.add('hidden');
+      loadPosts();
+    });
+
+    window.editPost = async (id) => {
+      const res = await fetch(`/api/admin/posts/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.post) {
+        const p = data.post;
+        document.getElementById('post-id').value = p.id;
+        document.getElementById('post-type').value = p.type || 'post';
+        document.getElementById('post-title').value = p.title;
+        document.getElementById('post-slug').value = p.slug;
+        document.getElementById('post-excerpt').value = p.excerpt || '';
+        document.getElementById('post-image').value = p.featured_image || '';
+        document.getElementById('post-content').value = p.content_markdown || p.content_html || '';
+        document.getElementById('post-status').value = p.status;
+        document.getElementById('editor-title').textContent = 'Edit Entry';
+        document.getElementById('post-editor').classList.remove('hidden');
+      }
+    };
+
+    window.deletePost = async (id) => {
+      if (confirm('Are you sure you want to delete this entry?')) {
+        await fetch(`/api/admin/posts/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        loadPosts();
+      }
+    };
+
+    checkAuth();
+  </script>
+</body>
+</html>
