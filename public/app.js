@@ -1,4 +1,4 @@
-// Motor de renderizado dinámico de temas, SEO y enrutamiento SPA con URLs Limpias
+// Motor de renderizado dinámico de temas, SEO, enrutamiento SPA y Slider Puzzle Captcha
 
 class CMSApp {
   constructor() {
@@ -6,6 +6,8 @@ class CMSApp {
     this.currentTheme = 'corporate';
     this.posts = [];
     this.appEl = document.getElementById('app');
+    this.captchaSolved = false;
+    this.captchaToken = null;
   }
 
   async init() {
@@ -48,7 +50,6 @@ class CMSApp {
     const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
     document.title = fullTitle;
 
-    // Meta Description
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
@@ -57,7 +58,6 @@ class CMSApp {
     }
     metaDesc.content = description || this.settings.site_description || '';
 
-    // OpenGraph Title
     let ogTitle = document.querySelector('meta[property="og:title"]');
     if (!ogTitle) {
       ogTitle = document.createElement('meta');
@@ -66,7 +66,6 @@ class CMSApp {
     }
     ogTitle.content = fullTitle;
 
-    // OpenGraph Description
     let ogDesc = document.querySelector('meta[property="og:description"]');
     if (!ogDesc) {
       ogDesc = document.createElement('meta');
@@ -75,7 +74,6 @@ class CMSApp {
     }
     ogDesc.content = metaDesc.content;
 
-    // OpenGraph Image
     if (imageUrl) {
       let ogImg = document.querySelector('meta[property="og:image"]');
       if (!ogImg) {
@@ -401,7 +399,6 @@ class CMSApp {
       const p = data.post;
       const isPage = p.type === 'page';
 
-      // SEO dinámico
       this.updateMetaTags(p.title, p.excerpt || p.meta_description, p.featured_image);
 
       const contentHasImages = /<img[^>]+src=/i.test(p.content_html || '');
@@ -431,6 +428,8 @@ class CMSApp {
 
   renderContact() {
     this.updateMetaTags('Contact Us', 'Get in touch with Devomatik for software consulting, app development, and ERP implementation.');
+    this.captchaSolved = false;
+    this.captchaToken = null;
 
     this.appEl.innerHTML = `
       ${this.getHeaderHtml()}
@@ -450,22 +449,51 @@ class CMSApp {
             <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Message</label>
             <textarea id="c-message" rows="5" required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px;"></textarea>
           </div>
-          <button type="submit" class="btn" style="align-self: flex-start;">Send Message</button>
+
+          <!-- Human Verification Slider Puzzle -->
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg-secondary);">
+            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem; display: flex; justify-content: space-between;">
+              <span>Security Check: Slide to complete the puzzle</span>
+              <button type="button" id="refresh-captcha-btn" style="background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.8rem;">↻ Refresh</button>
+            </div>
+            
+            <div id="captcha-canvas-container" style="position: relative; width: 280px; height: 140px; margin: 0 auto 0.75rem auto; border-radius: 6px; overflow: hidden; border: 1px solid var(--border);">
+              <canvas id="captcha-bg" width="280" height="140" style="display: block;"></canvas>
+              <canvas id="captcha-piece" width="280" height="140" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+            </div>
+
+            <div style="width: 280px; margin: 0 auto;">
+              <input type="range" id="captcha-slider" min="0" max="235" value="0" style="width: 100%; cursor: pointer;">
+            </div>
+            <div id="captcha-status-text" style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.35rem;">Drag the slider right to fit the puzzle piece</div>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn" style="align-self: flex-start;">Send Message</button>
           <div id="contact-status" style="margin-top: 0.5rem; font-weight: 600;"></div>
         </form>
       </div>
       ${this.getFooterHtml()}
     `;
 
+    this.initSliderCaptcha();
+
     document.getElementById('contact-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const statusEl = document.getElementById('contact-status');
+
+      if (!this.captchaSolved || !this.captchaToken) {
+        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Please solve the slider puzzle to verify you are human.';
+        return;
+      }
+
       statusEl.textContent = 'Sending...';
 
       const payload = {
         name: document.getElementById('c-name').value,
         email: document.getElementById('c-email').value,
         message: document.getElementById('c-message').value,
+        captcha_token: this.captchaToken,
       };
 
       try {
@@ -479,6 +507,7 @@ class CMSApp {
           statusEl.style.color = '#10b981';
           statusEl.textContent = 'Message sent successfully!';
           e.target.reset();
+          this.initSliderCaptcha();
         } else {
           statusEl.style.color = '#ef4444';
           statusEl.textContent = data.error || 'Error sending message';
@@ -488,6 +517,106 @@ class CMSApp {
         statusEl.textContent = 'Network error';
       }
     });
+  }
+
+  initSliderCaptcha() {
+    this.captchaSolved = false;
+    this.captchaToken = null;
+
+    const bgCanvas = document.getElementById('captcha-bg');
+    const pieceCanvas = document.getElementById('captcha-piece');
+    const slider = document.getElementById('captcha-slider');
+    const statusText = document.getElementById('captcha-status-text');
+    const refreshBtn = document.getElementById('refresh-captcha-btn');
+
+    if (!bgCanvas || !pieceCanvas || !slider) return;
+
+    slider.value = 0;
+    slider.disabled = false;
+    if (statusText) {
+      statusText.style.color = 'var(--text-muted)';
+      statusText.textContent = 'Drag the slider right to fit the puzzle piece';
+    }
+
+    const bgCtx = bgCanvas.getContext('2d');
+    const pieceCtx = pieceCanvas.getContext('2d');
+
+    const width = 280;
+    const height = 140;
+    const pieceSize = 44;
+
+    // Posición aleatoria del objetivo
+    const targetX = Math.floor(Math.random() * (width - pieceSize - 80)) + 60;
+    const targetY = Math.floor(Math.random() * (height - pieceSize - 30)) + 15;
+
+    // Dibujar fondo estético procedural (sin llamadas externas a APIs pesadas)
+    const hue1 = Math.floor(Math.random() * 360);
+    const hue2 = (hue1 + 60) % 360;
+    const grad = bgCtx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, `hsl(${hue1}, 70%, 55%)`);
+    grad.addColorStop(1, `hsl(${hue2}, 80%, 35%)`);
+    bgCtx.fillStyle = grad;
+    bgCtx.fillRect(0, 0, width, height);
+
+    // Formas de textura
+    bgCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    for (let i = 0; i < 6; i++) {
+      bgCtx.beginPath();
+      bgCtx.arc(Math.random() * width, Math.random() * height, Math.random() * 40 + 10, 0, Math.PI * 2);
+      bgCtx.fill();
+    }
+
+    // Dibujar hueco sombra en el fondo
+    bgCtx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    bgCtx.fillRect(targetX, targetY, pieceSize, pieceSize);
+    bgCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    bgCtx.lineWidth = 2;
+    bgCtx.strokeRect(targetX, targetY, pieceSize, pieceSize);
+
+    // Extraer la pieza recortada
+    const pieceImgData = bgCtx.getImageData(targetX, targetY, pieceSize, pieceSize);
+
+    const drawPiece = (xPos) => {
+      pieceCtx.clearRect(0, 0, width, height);
+      pieceCtx.putImageData(pieceImgData, xPos, targetY);
+      pieceCtx.strokeStyle = '#2563eb';
+      pieceCtx.lineWidth = 2.5;
+      pieceCtx.strokeRect(xPos, targetY, pieceSize, pieceSize);
+    };
+
+    drawPiece(0);
+
+    slider.oninput = (e) => {
+      const currentX = parseInt(e.target.value, 10);
+      drawPiece(currentX);
+    };
+
+    slider.onchange = (e) => {
+      const currentX = parseInt(e.target.value, 10);
+      if (Math.abs(currentX - targetX) <= 6) {
+        // Resuelto con éxito
+        this.captchaSolved = true;
+        this.captchaToken = `${targetX}:${currentX}:${Date.now()}`;
+        slider.disabled = true;
+        drawPiece(targetX); // Snapping exacto
+        if (statusText) {
+          statusText.style.color = '#10b981';
+          statusText.textContent = '✓ Verification successful!';
+        }
+      } else {
+        // Fallido, reintentar
+        slider.value = 0;
+        drawPiece(0);
+        if (statusText) {
+          statusText.style.color = '#ef4444';
+          statusText.textContent = 'Incorrect alignment. Try again!';
+        }
+      }
+    };
+
+    if (refreshBtn) {
+      refreshBtn.onclick = () => this.initSliderCaptcha();
+    }
   }
 }
 
