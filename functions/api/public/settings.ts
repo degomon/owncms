@@ -6,7 +6,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
     const result = await db.execute({
       sql: `SELECT key, value FROM settings WHERE key IN (
         'theme', 'site_title', 'site_tagline', 'site_description',
-        'contact_email', 'logo_url', 'favicon_url', 'analytics_code'
+        'contact_email', 'logo_url', 'favicon_url', 'analytics_code', 'show_cms_love'
       )`,
       args: [],
     });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — Devomatik CMS</title>
+  <title>Admin Dashboard — OwnCMS</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -33,6 +33,8 @@
     .preview-box { display: flex; align-items: center; gap: 1rem; margin-top: 0.25rem; margin-bottom: 1rem; }
     .preview-box img { max-height: 48px; max-width: 120px; object-fit: contain; border: 1px solid var(--border); padding: 2px; border-radius: 4px; background: #fff; }
     .badge-count { background: #ef4444; color: #fff; border-radius: 10px; padding: 0.1rem 0.45rem; font-size: 0.75rem; margin-left: 0.35rem; }
+    .checkbox-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; cursor: pointer; }
+    .checkbox-row input { width: 18px; height: 18px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -54,7 +56,7 @@
     <div id="dashboard-view" class="hidden">
       <div class="header">
         <div>
-          <h1>Devomatik CMS</h1>
+          <h1>OwnCMS Dashboard</h1>
           <span id="current-user-badge" style="color: var(--muted); font-size: 0.9rem;"></span>
         </div>
         <div>
@@ -95,9 +97,9 @@
         <form id="settings-form" style="margin-top: 1rem;">
           <label>Active Theme</label>
           <select id="setting-theme" class="select">
-            <option value="corporate">Corporate (Devomatik Default)</option>
-            <option value="magazine">Magazine</option>
-            <option value="personal">Personal Blog</option>
+            <option value="corporate">Corporate (Modern & Clean)</option>
+            <option value="magazine">Magazine (Editorial)</option>
+            <option value="personal">Personal Blog (Minimalist)</option>
           </select>
 
           <label>Site Title</label>
@@ -136,6 +138,11 @@
 
           <label>Analytics & Tracking Code (Matomo, StatCounter, Google Analytics, Plausible, etc.)</label>
           <textarea id="setting-analytics" class="textarea" rows="4" style="font-family: monospace; font-size: 0.85rem;" placeholder="<!-- Paste your tracking script / HTML here -->"></textarea>
+
+          <label class="checkbox-row">
+            <input type="checkbox" id="setting-cms-love">
+            <span><strong>Show CMS Love:</strong> Display "Powered with love by OwnCMS" credit badge in the site footer</span>
+          </label>
 
           <button type="submit" class="btn">Save Settings</button>
         </form>
@@ -441,6 +448,7 @@
         document.getElementById('setting-description').value = data.settings.site_description || '';
         document.getElementById('setting-email').value = data.settings.contact_email || '';
         document.getElementById('setting-analytics').value = data.settings.analytics_code || '';
+        document.getElementById('setting-cms-love').checked = (data.settings.show_cms_love === 'true' || data.settings.show_cms_love === '1');
 
         if (data.settings.logo_url) {
           document.getElementById('logo-preview-img').src = data.settings.logo_url;
@@ -557,6 +565,7 @@
           site_description: document.getElementById('setting-description').value,
           contact_email: document.getElementById('setting-email').value,
           analytics_code: document.getElementById('setting-analytics').value,
+          show_cms_love: document.getElementById('setting-cms-love').checked ? 'true' : 'false',
         })
       });
       alert('Settings updated successfully');

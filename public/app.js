@@ -25,8 +25,8 @@ class CMSApp {
         this.settings = data.settings;
         this.updateFavicon(this.settings.favicon_url);
         this.updateMetaTags(
-          this.settings.site_title || 'Devomatik',
-          this.settings.site_description || 'Software Consulting, App Development & Cloud Architecture'
+          this.settings.site_title || 'OwnCMS',
+          this.settings.site_description || 'Modern, lightweight and decoupled CMS powered by Cloudflare and Turso.'
         );
         this.injectAnalytics(this.settings.analytics_code);
       }
@@ -38,7 +38,6 @@ class CMSApp {
   injectAnalytics(code) {
     if (!code || !code.trim()) return;
 
-    // Evitar duplicación
     const existing = document.getElementById('custom-analytics-script');
     if (existing) existing.remove();
 
@@ -46,7 +45,6 @@ class CMSApp {
     container.id = 'custom-analytics-script';
     container.innerHTML = code;
 
-    // Ejecutar scripts incrustados
     const scripts = container.querySelectorAll('script');
     scripts.forEach((oldScript) => {
       const newScript = document.createElement('script');
@@ -73,7 +71,7 @@ class CMSApp {
   }
 
   updateMetaTags(title, description = '', imageUrl = '') {
-    const siteTitle = this.settings.site_title || 'Devomatik';
+    const siteTitle = this.settings.site_title || 'OwnCMS';
     const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
     document.title = fullTitle;
 
@@ -121,15 +119,22 @@ class CMSApp {
   }
 
   getLogoHtml() {
-    const siteTitle = this.settings.site_title || 'Devomatik';
+    const siteTitle = this.settings.site_title || 'OwnCMS';
     if (this.settings.logo_url) {
       return `<img src="${this.settings.logo_url}" alt="${siteTitle}" style="max-height: 40px; vertical-align: middle;">`;
     }
     return siteTitle;
   }
 
+  getCmsLoveHtml() {
+    if (this.settings.show_cms_love === 'true' || this.settings.show_cms_love === '1') {
+      return `<p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.85;">Powered with love by <a href="https://github.com/degomon/owncms" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">OwnCMS</a></p>`;
+    }
+    return '';
+  }
+
   getHeaderHtml() {
-    const siteTitle = this.settings.site_title || 'Devomatik';
+    const siteTitle = this.settings.site_title || 'OwnCMS';
     const logoHtml = this.getLogoHtml();
 
     if (this.currentTheme === 'magazine') {
@@ -181,7 +186,9 @@ class CMSApp {
   }
 
   getFooterHtml() {
-    const siteTitle = this.settings.site_title || 'Devomatik';
+    const siteTitle = this.settings.site_title || 'OwnCMS';
+    const cmsLove = this.getCmsLoveHtml();
+
     if (this.currentTheme === 'magazine') {
       return `
         <footer class="magazine-footer">
@@ -192,6 +199,7 @@ class CMSApp {
             <a href="/contact" style="color: var(--text-secondary); text-decoration: none;">Contact</a>
           </div>
           <p>&copy; ${new Date().getFullYear()} ${siteTitle}. All rights reserved.</p>
+          ${cmsLove}
         </footer>
       `;
     }
@@ -205,6 +213,7 @@ class CMSApp {
             <a href="/contact" style="color: var(--text-muted); text-decoration: none;">Contact</a>
           </div>
           <p>&copy; ${new Date().getFullYear()} ${siteTitle}.</p>
+          ${cmsLove}
         </footer>
       `;
     }
@@ -215,10 +224,11 @@ class CMSApp {
         <div style="max-width: 1200px; margin: 0 auto 1.5rem auto; display: flex; justify-content: center; gap: 2rem; font-size: 0.95rem; font-weight: 500;">
           <a href="/page/about" style="color: var(--text-secondary); text-decoration: none;">About</a>
           <a href="/page/privacy" style="color: var(--text-secondary); text-decoration: none;">Privacy Policy</a>
-          <a href="/page/hire-our-team" style="color: var(--text-secondary); text-decoration: none;">Hire Our Team</a>
+          <a href="/page/hire-our-team" style="color: var(--text-secondary); text-decoration: none;">Services</a>
           <a href="/contact" style="color: var(--text-secondary); text-decoration: none;">Contact</a>
         </div>
         <p>&copy; ${new Date().getFullYear()} ${siteTitle}. All rights reserved.</p>
+        ${cmsLove}
       </footer>
     `;
   }
@@ -261,8 +271,8 @@ class CMSApp {
 
   async renderHome() {
     this.updateMetaTags(
-      this.settings.site_title || 'Devomatik',
-      this.settings.site_description || 'Software Consulting, App Development & Cloud Architecture'
+      this.settings.site_title || 'OwnCMS',
+      this.settings.site_description || 'Modern, lightweight and decoupled CMS powered by Cloudflare and Turso.'
     );
 
     try {
@@ -283,8 +293,8 @@ class CMSApp {
   }
 
   renderCorporateHome() {
-    const siteTitle = this.settings.site_title || 'Devomatik';
-    const siteTagline = this.settings.site_tagline || 'App Development, Web Applications & Automation';
+    const siteTitle = this.settings.site_title || 'OwnCMS';
+    const siteTagline = this.settings.site_tagline || 'Modern & Scalable Digital Experiences';
 
     const postsHtml = this.posts.map(p => `
       <article class="post-card">
@@ -306,8 +316,8 @@ class CMSApp {
           <h1>${siteTitle}</h1>
           <p>${siteTagline}</p>
           <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="/page/hire-our-team" class="btn">Hire Our Team</a>
-            <a href="/page/own-projects" class="btn" style="background: transparent; color: var(--text-primary); border: 1px solid var(--border);">Our Projects</a>
+            <a href="/page/hire-our-team" class="btn">Explore Services</a>
+            <a href="/page/own-projects" class="btn" style="background: transparent; color: var(--text-primary); border: 1px solid var(--border);">Featured Projects</a>
           </div>
         </div>
       </section>
@@ -316,15 +326,15 @@ class CMSApp {
         <div class="grid-3">
           <div class="corporate-card">
             <h3>App & Web Development</h3>
-            <p>Specialists in Flutter, Java, PostgreSQL, and scalable high-performance cloud architectures.</p>
+            <p>High-performance applications built with modern frameworks and robust backend systems.</p>
           </div>
           <div class="corporate-card">
-            <h3>ERP Implementation</h3>
-            <p>Streamline business processes, improve operational efficiency, and automate workflows.</p>
+            <h3>Process Optimization</h3>
+            <p>Streamline workflows, automate repetitive operations, and maximize business efficiency.</p>
           </div>
           <div class="corporate-card">
-            <h3>Software Consulting</h3>
-            <p>Tailored digital solutions with a client-centric approach to drive growth and results.</p>
+            <h3>Strategic Consulting</h3>
+            <p>Expert advisory and architecture design tailored to scale your digital presence.</p>
           </div>
         </div>
       </section>
@@ -341,7 +351,7 @@ class CMSApp {
   }
 
   renderMagazineHome() {
-    const siteTitle = this.settings.site_title || 'Devomatik Magazine';
+    const siteTitle = this.settings.site_title || 'OwnCMS Magazine';
     const featured = this.posts[0];
     const rest = this.posts.slice(1);
 
@@ -382,8 +392,8 @@ class CMSApp {
   }
 
   renderPersonalHome() {
-    const siteTitle = this.settings.site_title || 'Devomatik';
-    const siteDesc = this.settings.site_description || 'Software Consulting, App Development & Cloud Architecture.';
+    const siteTitle = this.settings.site_title || 'OwnCMS';
+    const siteDesc = this.settings.site_description || 'Personal thoughts, development journey, and project notes.';
 
     const postsHtml = this.posts.map(p => `
       <article class="personal-post-item">
@@ -454,7 +464,7 @@ class CMSApp {
   }
 
   renderContact() {
-    this.updateMetaTags('Contact Us', 'Get in touch with Devomatik for software consulting, app development, and ERP implementation.');
+    this.updateMetaTags('Contact Us', 'Get in touch for software consulting, project collaborations, and inquiries.');
     this.captchaSolved = false;
     this.captchaToken = null;
 
@@ -462,7 +472,7 @@ class CMSApp {
       ${this.getHeaderHtml()}
       <div style="max-width: 600px; margin: 4rem auto; padding: 0 1.5rem; min-height: 50vh;">
         <h1 style="font-size: 2rem; margin-bottom: 1.5rem; font-weight: 800;">Contact Us</h1>
-        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Have a project in mind or need software consulting? Send us a message.</p>
+        <p style="color: var(--text-secondary); margin-bottom: 2rem;">Have a project in mind or need consulting? Send us a message.</p>
         <form id="contact-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
           <div>
             <label style="display: block; font-weight: 600; margin-bottom: 0.35rem;">Name</label>
