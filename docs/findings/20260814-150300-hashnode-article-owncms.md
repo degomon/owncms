@@ -2,7 +2,7 @@
 
 If you have spent any time running a blog or personal portfolio, you have likely faced the classic dilemma: **WordPress is too heavy and prone to maintenance fatigue, static site generators (SSGs) like Astro or Hugo require git pushes and full rebuilds for simple edits, and SaaS CMS platforms quickly become expensive.**
 
-For years, my agency website and blog at [Devomatik](https://www.devomatik.com) ran on Blogger. It worked, but it felt outdated, lacked custom layout flexibility, had awkward URLs, and provided zero integration with modern edge databases and clean design systems.
+For years, my agency website and blog at [Devomatik](https://devomatik.com) ran on Blogger. It worked, but it felt outdated, lacked custom layout flexibility, had awkward URLs, and provided zero integration with modern edge databases and clean design systems.
 
 I wanted something different:
 - **Instant publishing**: An admin panel where I can write and publish from any device without triggering a 3-minute static build.
