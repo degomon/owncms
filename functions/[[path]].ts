@@ -1,5 +1,27 @@
 import { getDb, type Env } from './_lib/db';
 
+function formatDisplayDate(dateVal: any): string {
+  if (!dateVal) return '';
+  try {
+    const str = String(dateVal).trim();
+    const isoStr = str.includes(' ') && !str.includes('T') ? str.replace(' ', 'T') + 'Z' : str;
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) {
+      const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        const d2 = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+        if (!isNaN(d2.getTime())) {
+          return d2.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+        }
+      }
+      return '';
+    }
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  } catch {
+    return '';
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const { request, env, next } = context;
   const url = new URL(request.url);
@@ -89,7 +111,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         FROM posts p
         LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.type = 'post' AND p.status = 'published'
-        ORDER BY p.published_at DESC
+        ORDER BY COALESCE(p.published_at, p.created_at) DESC
         LIMIT 10
       `);
 
@@ -100,7 +122,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
             <div class="post-card-tag">${p.category_name || 'Blog'}</div>
             <h3 class="post-card-title"><a href="/post/${p.slug}">${p.title}</a></h3>
             <p class="post-card-excerpt">${p.excerpt || ''}</p>
-            <div class="post-card-meta">${new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+            <div class="post-card-meta">${formatDisplayDate(p.published_at || p.created_at)}</div>
           </div>
         </article>
       `).join('');
@@ -165,7 +187,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           <div style="max-width: 860px; margin: 3rem auto; padding: 0 1.5rem; min-height: 50vh;">
             ${!isPage ? `<p style="margin-bottom: 1.5rem;"><a href="/" style="color: var(--accent); text-decoration: none; font-weight: 600;">&larr; Back to Blog</a></p>` : ''}
             <h1 style="font-size: 2.5rem; margin-bottom: ${isPage ? '2rem' : '0.5rem'}; line-height: 1.2; font-weight: 800;">${p.title}</h1>
-            ${!isPage ? `<p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">Published on ${new Date(p.published_at || p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>` : ''}
+            ${!isPage ? `<p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">Published on ${formatDisplayDate(p.published_at || p.created_at)}</p>` : ''}
             ${showHeaderImage ? `<img src="${p.featured_image}" style="width: 100%; max-height: 460px; object-fit: cover; border-radius: 8px; margin-bottom: 2rem;">` : ''}
             <div class="article-content" style="font-size: 1.15rem; line-height: 1.8;">
               ${p.content_html || p.content_markdown}

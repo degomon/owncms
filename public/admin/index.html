@@ -261,6 +261,28 @@
     let token = localStorage.getItem('token');
     let currentUser = null;
 
+    function formatDisplayDate(dateVal) {
+      if (!dateVal) return '-';
+      try {
+        const str = String(dateVal).trim();
+        const isoStr = str.includes(' ') && !str.includes('T') ? str.replace(' ', 'T') + 'Z' : str;
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) {
+          const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (match) {
+            const d2 = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+            if (!isNaN(d2.getTime())) {
+              return d2.toLocaleDateString('en-US');
+            }
+          }
+          return '-';
+        }
+        return d.toLocaleDateString('en-US');
+      } catch {
+        return '-';
+      }
+    }
+
     function switchTab(tab) {
       document.getElementById('posts-panel').classList.toggle('hidden', tab !== 'posts');
       document.getElementById('messages-panel').classList.toggle('hidden', tab !== 'messages');
@@ -377,7 +399,7 @@
           <td><code>${p.type || 'post'}</code></td>
           <td><code>/${p.slug}</code></td>
           <td><span class="status-badge status-${p.status}">${p.status}</span></td>
-          <td>${new Date(p.created_at).toLocaleDateString('en-US')}</td>
+          <td>${formatDisplayDate(p.published_at || p.created_at)}</td>
           <td>
             <button onclick="editPost(${p.id})" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</button>
             <button onclick="deletePost(${p.id})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #ef4444;">Delete</button>
@@ -414,7 +436,7 @@
       if (data.success && data.messages) {
         tbody.innerHTML = data.messages.length ? data.messages.map(m => `
           <tr style="${m.is_read ? 'opacity: 0.7;' : 'font-weight: 600; background: #f0fdf4;'}">
-            <td>${new Date(m.created_at).toLocaleDateString('en-US')}</td>
+            <td>${formatDisplayDate(m.created_at)}</td>
             <td>${m.name}</td>
             <td><a href="mailto:${m.email}">${m.email}</a></td>
             <td><div style="max-width: 300px; white-space: pre-wrap; font-size: 0.9rem;">${m.message}</div></td>
@@ -478,7 +500,7 @@
             <td><strong>${u.username}</strong></td>
             <td>${u.email}</td>
             <td>${u.display_name || '-'}</td>
-            <td>${new Date(u.created_at).toLocaleDateString('en-US')}</td>
+            <td>${formatDisplayDate(u.created_at)}</td>
           </tr>
         `).join('');
 

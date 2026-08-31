@@ -11,6 +11,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
 
     const db = getDb(env);
     let sql = `SELECT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.type, p.is_featured, p.published_at,
+                      p.created_at, p.updated_at,
                       c.name as category_name, c.slug as category_slug
                FROM posts p
                LEFT JOIN categories c ON p.category_id = c.id
@@ -27,7 +28,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       args.push(category);
     }
 
-    sql += ` ORDER BY p.is_featured DESC, p.published_at DESC LIMIT ? OFFSET ?`;
+    sql += ` ORDER BY p.is_featured DESC, COALESCE(p.published_at, p.created_at) DESC LIMIT ? OFFSET ?`;
     args.push(limit, offset);
 
     const result = await db.execute({ sql, args });

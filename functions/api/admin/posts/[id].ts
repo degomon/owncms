@@ -44,10 +44,32 @@ export const onRequestPut: PagesFunction<Env, 'id'> = async ({ request, params, 
       is_featured = 0,
       meta_title = '',
       meta_description = '',
-      published_at = null,
+      published_at,
     } = data;
 
     const db = getDb(env);
+
+    // Fetch existing post to preserve or update published_at correctly
+    const existingRes = await db.execute({
+      sql: 'SELECT id, status, published_at FROM posts WHERE id = ? LIMIT 1',
+      args: [params.id as string],
+    });
+
+    if (existingRes.rows.length === 0) {
+      return errorResponse('Post not found', 404);
+    }
+
+    const existingPost = existingRes.rows[0];
+    let finalPublishedAt = published_at;
+
+    if (finalPublishedAt === undefined) {
+      if (status === 'published') {
+        finalPublishedAt = existingPost.published_at || new Date().toISOString();
+      } else {
+        finalPublishedAt = existingPost.published_at || null;
+      }
+    }
+
     await db.execute({
       sql: `UPDATE posts SET
         title = ?, slug = ?, excerpt = ?, content_markdown = ?, content_html = ?,
@@ -57,7 +79,7 @@ export const onRequestPut: PagesFunction<Env, 'id'> = async ({ request, params, 
       args: [
         title, slug, excerpt, content_markdown, content_html, featured_image,
         type, status, category_id, is_featured ? 1 : 0, meta_title, meta_description,
-        published_at, params.id as string
+        finalPublishedAt, params.id as string
       ],
     });
 
