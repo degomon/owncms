@@ -1,5 +1,23 @@
 import { getDb, type Env } from './_lib/db';
 
+function formatLastmod(dateVal: any): string {
+  if (!dateVal) return new Date().toISOString().split('T')[0];
+  try {
+    const str = String(dateVal).trim();
+    const datePart = str.split(/[\sT]/)[0];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+      return datePart;
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().split('T')[0];
+    }
+    return new Date().toISOString().split('T')[0];
+  } catch {
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   const url = new URL(request.url);
   const baseUrl = `${url.protocol}//${url.host}`;
@@ -25,11 +43,10 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`;
-
     for (const row of result.rows) {
       const prefix = row.type === 'page' ? 'page' : 'post';
       const loc = `${baseUrl}/${prefix}/${row.slug}`;
-      const lastmod = (row.updated_at || row.published_at || new Date().toISOString()).split('T')[0];
+      const lastmod = formatLastmod(row.updated_at || row.published_at);
       const priority = row.type === 'page' ? '0.8' : '0.7';
 
       xml += `
